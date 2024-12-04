@@ -1,13 +1,13 @@
-package com.instaTalk.InstaTalk;
+package com.Connectify.Connectify;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class InstaTalkApplication {
+public class ConnectifyApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(InstaTalkApplication.class, args);
+		SpringApplication.run(ConnectifyApplication.class, args);
 	}
 
 }
