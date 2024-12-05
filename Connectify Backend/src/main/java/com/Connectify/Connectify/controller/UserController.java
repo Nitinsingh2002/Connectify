@@ -1,15 +1,14 @@
 package com.Connectify.Connectify.controller;
 
 
+import com.Connectify.Connectify.dto.LoginDto;
 import com.Connectify.Connectify.dto.UserDto;
 import com.Connectify.Connectify.entity.User;
 import com.Connectify.Connectify.enums.AccountType;
 import com.Connectify.Connectify.service.UserService;
-import jakarta.transaction.Transactional;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.security.core.parameters.P;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -52,6 +51,14 @@ public class UserController {
     private ResponseEntity<String> changeAccountType(@PathVariable Long id, @PathVariable AccountType type){
         return userService.changeAccountType(id,type);
     }
+
+    //Api to login
+    @PostMapping("/login")
+    private ResponseEntity<String> userLogin(@RequestBody LoginDto loginDetails){
+        return userService.verify(loginDetails);
+    }
+
+
 
 
 

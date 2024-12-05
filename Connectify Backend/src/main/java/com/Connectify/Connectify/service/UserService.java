@@ -1,6 +1,7 @@
 package com.Connectify.Connectify.service;
 
 
+import com.Connectify.Connectify.dto.LoginDto;
 import com.Connectify.Connectify.dto.UserDto;
 import com.Connectify.Connectify.entity.User;
 import com.Connectify.Connectify.enums.AccountType;
@@ -12,6 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +27,13 @@ public class UserService {
 
     @Autowired
     IUser iUser;
+
+    @Autowired
+    JWTService jwtService;
+
+    @Autowired
+    AuthenticationManager authManager;
+
 
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 
@@ -185,5 +196,28 @@ public class UserService {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Something went wrong, please try again letter");
         }
         return ResponseEntity.status(HttpStatus.OK).body("Account type changed successfully!");
+    }
+
+
+
+
+    public ResponseEntity<String> verify(LoginDto loginDetails) {
+
+        String  username  = loginDetails.getUsername();
+        String password = loginDetails.getPassword();
+
+
+        Authentication authentication =
+                authManager.authenticate
+                        (new UsernamePasswordAuthenticationToken(loginDetails.getUsername(), loginDetails.getPassword()));
+
+
+        if (authentication.isAuthenticated()) {
+            System.out.println("true");
+            String token = jwtService.getToken(loginDetails.getUsername());
+            return ResponseEntity.status(HttpStatus.OK).body(token);
+        }
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Incorrect credentials");
     }
 }
