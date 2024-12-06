@@ -21,9 +21,9 @@ public class MyUserDetailsService  implements UserDetailsService {
 
     //this is abstract method  we need to define this method when we implement UserDetails Service
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 
-        User user = iUser.findByUserName(username);
+        User user = iUser.findByEmail(email);
 
         if(user == null) {
             System.out.println("user not found");

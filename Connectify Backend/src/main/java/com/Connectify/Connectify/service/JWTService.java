@@ -26,13 +26,13 @@ public class JWTService {
 
     private String secretKey ="afafasfafafasfasfasfafacasdasfasxASFACASDFACASDFASFASFDAFASFASDAADSCSDFADCVSGCFVADXCcadwavfsfarvf";
 
-    public String getToken(String username) {
+    public String getToken(String email) {
         Map<String,Object> claims = new HashMap<>();
 
         return Jwts.builder()
                 .claims()
                 .add(claims)
-                .subject(username)
+                .subject(email)
                 .issuedAt( new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + 60*60*60*10))
                 .and()
@@ -47,9 +47,10 @@ public class JWTService {
     }
 
 
+//  validation start from here //
 
-    //method for extracting username from token
-    public String extracUsername(String token) {
+    //method for extracting email from token
+    public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
@@ -70,8 +71,9 @@ public class JWTService {
 
 
     public boolean validateToken(String token, UserDetails userDetails) {
-        final String userName  = extracUsername(token);
-        return (userName.equals(userDetails.getUsername())&& !isTokenExpired(token));
+        final String email  = extractEmail(token);
+
+        return (email.equals(userDetails.getUsername())&& !isTokenExpired(token));
 
     }
 

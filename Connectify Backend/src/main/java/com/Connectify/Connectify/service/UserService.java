@@ -209,12 +209,12 @@ public class UserService {
 
         Authentication authentication =
                 authManager.authenticate
-                        (new UsernamePasswordAuthenticationToken(loginDetails.getUsername(), loginDetails.getPassword()));
+                        (new UsernamePasswordAuthenticationToken(loginDetails.getEmail(), loginDetails.getPassword()));
 
 
         if (authentication.isAuthenticated()) {
             System.out.println("true");
-            String token = jwtService.getToken(loginDetails.getUsername());
+            String token = jwtService.getToken(loginDetails.getEmail());
             return ResponseEntity.status(HttpStatus.OK).body(token);
         }
 
