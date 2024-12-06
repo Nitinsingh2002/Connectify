@@ -4,11 +4,14 @@ package com.Connectify.Connectify.controller;
 import com.Connectify.Connectify.dto.LoginDto;
 import com.Connectify.Connectify.dto.UserDto;
 import com.Connectify.Connectify.entity.User;
+import com.Connectify.Connectify.entity.UserPrinciple;
 import com.Connectify.Connectify.enums.AccountType;
 import com.Connectify.Connectify.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.parameters.P;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -42,14 +45,16 @@ public class UserController {
 
    //Api to update user details
     @PutMapping("/{id}")
-    private ResponseEntity<String> updateUser(@PathVariable Long id, @RequestBody UserDto userDetails){
-        return userService.updateUser(id,userDetails);
+    private ResponseEntity<String> updateUser(@PathVariable Long id, @RequestBody UserDto userDetails,
+                                              @AuthenticationPrincipal UserPrinciple userPrinciple){
+        return userService.updateUser(id,userDetails,userPrinciple);
     }
 
     //Api to convert account type
     @PutMapping("/{id}/{type}")
-    private ResponseEntity<String> changeAccountType(@PathVariable Long id, @PathVariable AccountType type){
-        return userService.changeAccountType(id,type);
+    private ResponseEntity<String> changeAccountType(@PathVariable Long id, @PathVariable AccountType type,
+                                                     @AuthenticationPrincipal UserPrinciple userPrinciple){
+        return userService.changeAccountType(id,type,userPrinciple);
     }
 
     //Api to login
@@ -57,8 +62,6 @@ public class UserController {
     private ResponseEntity<String> userLogin(@RequestBody LoginDto loginDetails){
         return userService.verify(loginDetails);
     }
-
-
 
 
 

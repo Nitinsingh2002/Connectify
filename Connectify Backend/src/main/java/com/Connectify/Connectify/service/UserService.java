@@ -4,6 +4,7 @@ package com.Connectify.Connectify.service;
 import com.Connectify.Connectify.dto.LoginDto;
 import com.Connectify.Connectify.dto.UserDto;
 import com.Connectify.Connectify.entity.User;
+import com.Connectify.Connectify.entity.UserPrinciple;
 import com.Connectify.Connectify.enums.AccountType;
 import com.Connectify.Connectify.enums.Role;
 import com.Connectify.Connectify.repository.IUser;
@@ -122,14 +123,30 @@ public class UserService {
     }
 
 
-    public ResponseEntity<String> updateUser(Long id, @Valid UserDto userDetails) {
+    public ResponseEntity<String> updateUser(Long id, @Valid UserDto userDetails, UserPrinciple userPrinciple) {
+
+        //extracting email
+        //actually UserPrinciple object is also object of UserDetails because it implements UserDetails interface
+        //and in UserPrinciple class we have method getUsername //since we are using authentication using gmail
+        //so it returns email
+        String emailFromToken = userPrinciple.getUsername();
+
+
         // Check if user exists
         Optional<User> user = iUser.findById(id);
+
+
         if (user.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }
 
         User existingUser = user.get();
+
+        //checking that only login user can update their details
+        if (!emailFromToken.equals(existingUser.getEmail())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("you are not authorized to update details");
+        }
+
 
         // Validate username
         if (!userDetails.getUserName().equals(existingUser.getUserName())) {
@@ -156,7 +173,7 @@ public class UserService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Bio cannot exceed 255 characters");
         }
 
-        // Validate email
+        // Validate email means if user update email first check that email is available or not
         if (!userDetails.getEmail().equals(existingUser.getEmail())) {
             boolean userEmailExists = iUser.existsByEmail(userDetails.getEmail());
             if (userEmailExists) {
@@ -180,14 +197,24 @@ public class UserService {
     }
 
 
-    public ResponseEntity<String> changeAccountType(Long id, AccountType type) {
+    public ResponseEntity<String> changeAccountType(Long id, AccountType type, UserPrinciple userPrinciple) {
         Optional<User> user = iUser.findById(id);
+
+        //extracting email from userPrinciple //since we use authentication using email so username return email
+        //for more clarity check userPrinciple class
+        String email = userPrinciple.getUsername();
+
 
         if (user.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }
 
         User retrivedUser = user.get();
+
+        //checking only login user can change their account type
+        if (!email.equals(retrivedUser.getEmail())) {
+            return ResponseEntity.status((HttpStatus.UNAUTHORIZED)).body("You are not authorised change account type");
+        }
         retrivedUser.setAccountType(type);
 
         try {
@@ -199,13 +226,7 @@ public class UserService {
     }
 
 
-
-
     public ResponseEntity<String> verify(LoginDto loginDetails) {
-
-        String  username  = loginDetails.getUsername();
-        String password = loginDetails.getPassword();
-
 
         Authentication authentication =
                 authManager.authenticate
@@ -213,8 +234,11 @@ public class UserService {
 
 
         if (authentication.isAuthenticated()) {
-            System.out.println("true");
-            String token = jwtService.getToken(loginDetails.getEmail());
+            // Retrieve user ID (assuming MyUserDetails has a getId() method)
+            UserPrinciple userDetails = (UserPrinciple) authentication.getPrincipal();
+            Long userId = userDetails.getId();
+            //getting token
+            String token = jwtService.getToken(loginDetails.getEmail(), userId);
             return ResponseEntity.status(HttpStatus.OK).body(token);
         }
 

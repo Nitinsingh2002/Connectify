@@ -19,6 +19,13 @@ public class UserPrinciple implements UserDetails {
     }
 
 
+    // this method is created by me to retrieve user id from user
+    public Long getId()
+    {
+        return user.getId();
+    }
+
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<GrantedAuthority> authorities = new ArrayList<>();

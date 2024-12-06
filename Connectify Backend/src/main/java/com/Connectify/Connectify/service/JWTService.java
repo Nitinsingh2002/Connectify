@@ -26,8 +26,9 @@ public class JWTService {
 
     private String secretKey ="afafasfafafasfasfasfafacasdasfasxASFACASDFACASDFASFASFDAFASFASDAADSCSDFADCVSGCFVADXCcadwavfsfarvf";
 
-    public String getToken(String email) {
+    public String getToken(String email,Long userId) {
         Map<String,Object> claims = new HashMap<>();
+        claims.put("userId",userId);
 
         return Jwts.builder()
                 .claims()
