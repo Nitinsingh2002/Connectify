@@ -2,6 +2,7 @@ package com.Connectify.Connectify.controller;
 
 
 import com.Connectify.Connectify.dto.LoginDto;
+import com.Connectify.Connectify.dto.ResetPasswordDto;
 import com.Connectify.Connectify.dto.UserDto;
 import com.Connectify.Connectify.entity.User;
 import com.Connectify.Connectify.entity.UserPrinciple;
@@ -63,6 +64,20 @@ public class UserController {
         return userService.verify(loginDetails);
     }
 
+    //api for making request to forgot password
+    @PostMapping("/forgotPassword/{email}")
+    private ResponseEntity<String> forgotPassword(@PathVariable String email){
+        return userService.forgotPassword(email);
+    }
+
+    //api for rest password
+    @PutMapping("/restPassword/{userId}/{token}")
+    private ResponseEntity<String> resetPassword(@PathVariable String token,
+                                                 @RequestBody  ResetPasswordDto password,
+                                                 @PathVariable Long userId){
+
+        return userService.resetPassword(token,password,userId);
+    }
 
 
 }

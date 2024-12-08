@@ -17,4 +17,5 @@ public interface IUser extends JpaRepository<User,Long> {
 
 
     User findByUserName(String username);
+
 }

@@ -2,6 +2,7 @@ package com.Connectify.Connectify.service;
 
 
 import com.Connectify.Connectify.dto.LoginDto;
+import com.Connectify.Connectify.dto.ResetPasswordDto;
 import com.Connectify.Connectify.dto.UserDto;
 import com.Connectify.Connectify.entity.User;
 import com.Connectify.Connectify.entity.UserPrinciple;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class UserService {
@@ -36,7 +38,12 @@ public class UserService {
     AuthenticationManager authManager;
 
 
+    @Autowired
+    EmailService emailService;
+
+
     private final BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
+    private final BCryptPasswordEncoder resetTokenEncoder = new BCryptPasswordEncoder(4);
 
     public ResponseEntity<String> register(@Valid User user) {
         if (user.getPassword().length() < 8) {
@@ -228,20 +235,118 @@ public class UserService {
 
     public ResponseEntity<String> verify(LoginDto loginDetails) {
 
-        Authentication authentication =
-                authManager.authenticate
-                        (new UsernamePasswordAuthenticationToken(loginDetails.getEmail(), loginDetails.getPassword()));
+        String password = loginDetails.getPassword();
+
+        try{
+            Authentication authentication =
+                    authManager.authenticate
+                            (new UsernamePasswordAuthenticationToken(loginDetails.getEmail(), loginDetails.getPassword()));
 
 
-        if (authentication.isAuthenticated()) {
-            // Retrieve user ID (assuming MyUserDetails has a getId() method)
-            UserPrinciple userDetails = (UserPrinciple) authentication.getPrincipal();
-            Long userId = userDetails.getId();
-            //getting token
-            String token = jwtService.getToken(loginDetails.getEmail(), userId);
-            return ResponseEntity.status(HttpStatus.OK).body(token);
+            if (authentication.isAuthenticated()) {
+                // Retrieve user ID (assuming MyUserDetails has a getId() method)
+                UserPrinciple userDetails = (UserPrinciple) authentication.getPrincipal();
+                Long userId = userDetails.getId();
+                //getting token
+                String token = jwtService.getToken(loginDetails.getEmail(), userId);
+                return ResponseEntity.status(HttpStatus.OK).body(token);
+            } else {
+                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Incorrect credentials");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Incorrect credentials");
         }
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Incorrect credentials");
+
+    }
+
+    public ResponseEntity<String> forgotPassword(String email) {
+
+        //finding user with email
+        User user = iUser.findByEmail(email);
+
+        if(user == null){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("user not found with this email");
+        }
+
+        //creating token
+        String token  = UUID.randomUUID().toString();
+
+        // we are hashing token with the help of bcrypt with less  round so we create new instance of bcrypt
+        String hashedToken = resetTokenEncoder.encode(token);
+
+        //saving the token and token expiration time
+        user.setResetPasswordToken(hashedToken);
+        LocalDateTime time = LocalDateTime.now().plusMinutes(10);
+        user.setResetPasswordExpires(time);
+         try{
+             iUser.save(user);
+         } catch (Exception e) {
+             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Something went wrong, please try again letter");
+         }
+
+         //sending mail to user
+        String to = email;
+        String subject = "Forgot password request";
+        String body = "You requested a password reset. Please click on the link below to reset your password:\n\n" +
+                "http://localhost:3000/reset-password/" +user.getId() +"/"+ token + "\n\n" +
+                "If you did not request this, please ignore this email.";
+       try{
+           emailService.sendMail(to,subject,body);
+       }catch (Exception e){
+           return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to send email.");
+       }
+
+       return ResponseEntity.status(HttpStatus.OK).body("If the email exists, a reset link has been sent.");
+
+    }
+
+    public ResponseEntity<String> resetPassword(String token, ResetPasswordDto pass, Long userId) {
+
+        //finding user with user id
+        Optional<User> optionalUser = iUser.findById(userId);
+
+       if (optionalUser.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Invalid or expired reset token.");
+       }
+
+       User user = optionalUser.get();
+
+        // Check if reset token or expiration fields are null  we are checking null because isBefore method not handle null
+        if (user.getResetPasswordToken() == null || user.getResetPasswordExpires() == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid reset token.");
+        }
+
+       //comparing token from db and provided token
+        boolean match = resetTokenEncoder.matches(token,user.getResetPasswordToken());
+
+        if(!match){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Reset token has expired.");
+        }
+
+        // Check if the token has expired
+        if (user.getResetPasswordExpires().isBefore(LocalDateTime.now())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Reset token has expired.");
+        }
+        user.setPassword(null);
+
+
+        String hashedPassword = encoder.encode(pass.getPassword());
+
+        System.out.println(hashedPassword);
+
+        user.setPassword(hashedPassword);
+
+       user.setResetPasswordExpires(null);
+       user.setResetPasswordToken(null);
+
+      try{
+         iUser.save(user);
+      }catch (Exception e){
+          return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).
+                  body("something went wrong please try again latter");
+      }
+
+        return ResponseEntity.status(HttpStatus.OK).body("Password has been successfully reset.");
     }
 }

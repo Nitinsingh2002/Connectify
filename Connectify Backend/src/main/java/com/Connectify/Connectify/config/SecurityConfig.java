@@ -36,6 +36,8 @@ public class SecurityConfig {
             auth.requestMatchers("/api/v1/user/register",
                     "/api/v1/user/login",
                     "/swagger-ui/**",
+                    "/api/v1/user/forgotPassword/**",
+                    "/api/v1/user/restPassword/**",
                     "/v3/api-docs/**" ).
                     permitAll();
             auth.anyRequest().authenticated();

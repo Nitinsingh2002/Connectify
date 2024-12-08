@@ -57,11 +57,11 @@ public class JwtFilter extends OncePerRequestFilter {
             boolean result  = jwtService.validateToken(token,userDetails);
 
             if(result){
+                //passing to next filter in security filter chain
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
-                System.out.println("Authentication: " + SecurityContextHolder.getContext().getAuthentication());
 
             }
         }
