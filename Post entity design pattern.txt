@@ -1,0 +1,52 @@
+User
+ └── Post (1-to-Many)
+       ├── ImagePost (1-to-1)
+       ├── VideoPost (1-to-1)
+       └── ReelPost (1-to-1)
+Like (Many-to-One)
+ └── Post
+Comment (Many-to-One)
+ └── Post
+
+
+Documentation: Post Design Pattern
+Design Overview:
+A single Post table is created to represent all types of posts.
+This table contains a field to specify the type of post (postType) as an enum with values like ImagePost, VideoPost, and ReelPost.
+Type-specific details (e.g., URLs, durations) are stored in separate tables: ImagePost, VideoPost, and ReelPost.
+The Post table is linked to these type-specific tables via a 1-to-1 relationship.
+
+
+Why This Design Pattern?:
+Unified Feed:
+
+This design simplifies the creation of a unified timeline or feed, where posts of all types (images, videos, reels) are displayed together.
+Example query:
+sql
+Copy code
+SELECT posts.id, posts.user_id, posts.post_type, posts.created_at
+FROM posts
+ORDER BY posts.created_at DESC;
+This approach ensures consistency when ordering posts chronologically or aggregating across types.
+
+Scalability:
+
+Post-specific details (e.g., mediaUrl, videoDuration) are stored in separate tables, reducing the likelihood of null or unused fields in the Post table.
+Makes schema more flexible to accommodate new post types in the future.
+Modularity:
+
+Separation of type-specific fields into dedicated tables improves maintainability.
+Type-specific changes or optimizations can be made without impacting the main Post table or other types.
+
+Analytics:
+
+Enables easy aggregation and analysis of post statistics across all types.
+Example:
+sql
+Copy code
+SELECT post_type, COUNT(*) AS total_posts
+FROM posts
+GROUP BY post_type;
+Real-World Use Cases:
+
+Platforms like Instagram, Facebook, and Twitter use similar design principles for their unified timelines.
