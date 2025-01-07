@@ -38,7 +38,7 @@ public class SecurityConfig {
                     "/swagger-ui/**",
                     "/api/v1/user/forgotPassword/**",
                     "/api/v1/user/restPassword/**",
-                    "/v3/api-docs/**" ).
+                    "/v3/api-docs/**").
                     permitAll();
             auth.anyRequest().authenticated();
         });
