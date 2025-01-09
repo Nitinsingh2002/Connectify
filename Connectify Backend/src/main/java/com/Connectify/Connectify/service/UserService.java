@@ -11,6 +11,7 @@ import com.Connectify.Connectify.enums.Role;
 import com.Connectify.Connectify.repository.IUser;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
+import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -348,5 +349,24 @@ public class UserService {
       }
 
         return ResponseEntity.status(HttpStatus.OK).body("Password has been successfully reset.");
+    }
+
+    public ResponseEntity<?> fetchUserByUserName(String userName) {
+
+        User user = iUser.findByUserName(userName);
+        if(user == null){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Unable to found user");
+        }
+
+        UserDto userDetails = new UserDto();
+        userDetails.setId(user.getId());
+        userDetails.setUserName(user.getUserName());
+        userDetails.setFullName(user.getFullName());
+        userDetails.setGender(userDetails.getGender());
+        userDetails.setEmail(user.getEmail());
+        userDetails.setBio(user.getBio());
+
+
+        return ResponseEntity.status(HttpStatus.OK).body(userDetails);
     }
 }

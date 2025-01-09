@@ -80,4 +80,11 @@ public class UserController {
     }
 
 
+    //api to fetch user by userName
+    @GetMapping("/user/{userName}")
+    private ResponseEntity<?> fetchUserByUserName(@PathVariable String userName){
+        return userService.fetchUserByUserName(userName);
+    }
+
+
 }
