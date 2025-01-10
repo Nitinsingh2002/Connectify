@@ -7,6 +7,7 @@ import com.Connectify.Connectify.entity.Follow;
 import com.Connectify.Connectify.entity.Post;
 import com.Connectify.Connectify.entity.User;
 import com.Connectify.Connectify.entity.UserPrinciple;
+import com.Connectify.Connectify.enums.FollowStatus;
 import com.Connectify.Connectify.repository.IFollow;
 import com.Connectify.Connectify.repository.IPost;
 import com.Connectify.Connectify.repository.IUser;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -140,7 +142,186 @@ public class ExploreService {
 
     }
 
+    public ResponseEntity<?> createTimeline(int page, int size, UserPrinciple userDetails) {
+
+        //step 1 find all the user which is followed by current user.
+        List<Follow> follows = iFollow.findByFollowerAndStatus(userDetails.getUser(), FollowStatus.ACCEPTED);
+        // list of follows have all information like following and followers, but we only interested in following user because we know follower is current user
+        List<User> followedUsers = follows.stream()
+                .map(follow -> follow.getFollowing())
+                .toList();
+
+
+        //step 2 fetch the posts from followed user
+        Pageable pageable = PageRequest.of(page,size, Sort.by("createdAt").descending());
+        Page<Post> followedPosts = iPost.findByUserIn(followedUsers,pageable);
+        
+
+
+        // Step 3: Convert followed posts to PostResponseDto
+        List<PostResponseDto> allPost = followedPosts.stream().map(post -> {
+            PostResponseDto postInfo = new PostResponseDto();
+
+            // Set the basic fields of the post
+            postInfo.setId(post.getId());
+            postInfo.setCaption(post.getCaption());
+            postInfo.setPostType(post.getPostType());
+            postInfo.setCreatedAt(post.getCreatedAt());
+            postInfo.setPostContentUrl(post.getPostContent());
+            postInfo.setThumbnailUrl(post.getThumbnailUrl());
+            postInfo.setUpdatedAt(post.getUpdatedAt());
+
+            // Map the user details to UserDto
+            UserDto userInfo = new UserDto();
+            userInfo.setId(post.getUser().getId());
+            userInfo.setUserName(post.getUser().getUserName());
+            userInfo.setFullName(post.getUser().getFullName());
+            userInfo.setBio(post.getUser().getBio());
+            userInfo.setEmail(post.getUser().getEmail());
+            userInfo.setGender(post.getUser().getGender());
+            postInfo.setUser(userInfo);
+
+            // Map the tagged users
+           if (postInfo.getTaggedUser() != null){
+               Set<UserDto> taggedUsers = postInfo.getTaggedUser().stream().map(taggedUser -> {
+                   UserDto taggedUserDto = new UserDto();
+                   taggedUserDto.setId(taggedUser.getId());
+                   taggedUserDto.setUserName(taggedUser.getUserName());
+                   taggedUserDto.setFullName(taggedUser.getFullName());
+                   taggedUserDto.setBio(taggedUser.getBio());
+                   taggedUserDto.setEmail(taggedUser.getEmail());
+                   taggedUserDto.setGender(taggedUser.getGender());
+                   return taggedUserDto;
+               }).collect(Collectors.toSet());
+               postInfo.setTaggedUser(taggedUsers);
+           }else{
+               postInfo.setTaggedUser(Collections.emptySet());
+           }
+            return postInfo;
+        }).toList();
+
+        if (allPost.isEmpty()){
+            return ResponseEntity.status(HttpStatus.OK).body("please follow more user ");
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(allPost);
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

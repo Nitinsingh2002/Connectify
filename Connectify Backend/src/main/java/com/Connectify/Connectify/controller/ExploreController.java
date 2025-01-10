@@ -38,4 +38,12 @@ public class ExploreController {
         return exploreService.searchPost(query, page, size);
     }
 
+    //api to create timeline for user
+     @GetMapping("/timeline")
+    private ResponseEntity<?> createTimeLine(@RequestParam(value = "page", defaultValue = "0")int page,
+                                             @RequestParam(value="size",defaultValue = "20")int size,
+                                             @AuthenticationPrincipal UserPrinciple userDetails){
+        return exploreService.createTimeline(page,size,userDetails);
+    }
+
 }
