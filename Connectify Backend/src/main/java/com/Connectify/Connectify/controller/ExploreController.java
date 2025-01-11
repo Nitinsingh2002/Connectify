@@ -46,4 +46,11 @@ public class ExploreController {
         return exploreService.createTimeline(page,size,userDetails);
     }
 
+    //create reel timeline
+    @GetMapping("/timeline/reel")
+    private ResponseEntity<?> createReel(@RequestParam(value = "page", defaultValue = "0")int page,
+                                             @RequestParam(value="size",defaultValue = "5")int size,
+                                             @AuthenticationPrincipal UserPrinciple userDetails){
+        return exploreService.createReelTimeLine(page,size,userDetails);
+    }
 }

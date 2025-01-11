@@ -64,7 +64,14 @@ public class Post {
     private Set<User> taggedUSer;
 
 
+    //change done from here to automatically delete comment and like when post is deleted
 
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Comment> comments;
+    
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Like> likes;
+    
 }
 
 

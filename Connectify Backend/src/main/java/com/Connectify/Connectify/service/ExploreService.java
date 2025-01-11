@@ -7,7 +7,9 @@ import com.Connectify.Connectify.entity.Follow;
 import com.Connectify.Connectify.entity.Post;
 import com.Connectify.Connectify.entity.User;
 import com.Connectify.Connectify.entity.UserPrinciple;
+import com.Connectify.Connectify.enums.AccountType;
 import com.Connectify.Connectify.enums.FollowStatus;
+import com.Connectify.Connectify.enums.PostType;
 import com.Connectify.Connectify.repository.IFollow;
 import com.Connectify.Connectify.repository.IPost;
 import com.Connectify.Connectify.repository.IUser;
@@ -94,7 +96,6 @@ public class ExploreService {
         return ResponseEntity.status(HttpStatus.OK).body(rankedResults);
     }
 
-
     public ResponseEntity<?> searchPost(String query, int page, int size) {
         if (query.length() < 3) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Please enter at least 3 characters");
@@ -155,7 +156,7 @@ public class ExploreService {
         //step 2 fetch the posts from followed user
         Pageable pageable = PageRequest.of(page,size, Sort.by("createdAt").descending());
         Page<Post> followedPosts = iPost.findByUserIn(followedUsers,pageable);
-        
+
 
 
         // Step 3: Convert followed posts to PostResponseDto
@@ -205,6 +206,66 @@ public class ExploreService {
         }
         return ResponseEntity.status(HttpStatus.OK).body(allPost);
     }
+
+    public ResponseEntity<?> createReelTimeLine(int page, int size, UserPrinciple userDetails) {
+
+        if (page < 0 || size <= 0) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Page and size must be positive values.");
+        }
+
+        // Step 1: Fetch public reels sorted by creation date
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        List<Post> fetchedReels = iPost.findByPostTypeAndUser_AccountType(PostType.REEL,AccountType.PUBLIC, pageable);
+
+        // Step 2: Convert reels to PostResponseDto
+        List<PostResponseDto> allReels = fetchedReels.stream().map(post -> {
+            PostResponseDto reelInfo = new PostResponseDto();
+
+            // Set the basic fields of the post (reel)
+            reelInfo.setId(post.getId());
+            reelInfo.setCaption(post.getCaption());
+            reelInfo.setPostType(post.getPostType());
+            reelInfo.setCreatedAt(post.getCreatedAt());
+            reelInfo.setPostContentUrl(post.getPostContent());
+            reelInfo.setThumbnailUrl(post.getThumbnailUrl());
+            reelInfo.setUpdatedAt(post.getUpdatedAt());
+
+            // Map the user details to UserDto
+            UserDto userInfo = new UserDto();
+            userInfo.setId(post.getUser().getId());
+            userInfo.setUserName(post.getUser().getUserName());
+            userInfo.setFullName(post.getUser().getFullName());
+            userInfo.setBio(post.getUser().getBio());
+            userInfo.setEmail(post.getUser().getEmail());
+            userInfo.setGender(post.getUser().getGender());
+            reelInfo.setUser(userInfo);
+
+            // Map the tagged users
+            if (post.getTaggedUSer() != null && !post.getTaggedUSer().isEmpty()) {
+                Set<UserDto> taggedUsers = post.getTaggedUSer().stream().map(taggedUser -> {
+                    UserDto taggedUserDto = new UserDto();
+                    taggedUserDto.setId(taggedUser.getId());
+                    taggedUserDto.setUserName(taggedUser.getUserName());
+                    taggedUserDto.setFullName(taggedUser.getFullName());
+                    taggedUserDto.setBio(taggedUser.getBio());
+                    taggedUserDto.setEmail(taggedUser.getEmail());
+                    taggedUserDto.setGender(taggedUser.getGender());
+                    return taggedUserDto;
+                }).collect(Collectors.toSet());
+                reelInfo.setTaggedUser(taggedUsers);
+            } else {
+                reelInfo.setTaggedUser(Collections.emptySet());
+            }
+            return reelInfo;
+        }).toList();
+
+        // Step 3: Return response
+        if (allReels.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.OK).body("No reels available at the moment.");
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(allReels);
+    }
+
 }
 
 
